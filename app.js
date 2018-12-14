@@ -171,6 +171,24 @@ app.get('/results', async (req, res) => {
   return res.sendStatus(403);
 });
 
+app.get('/results/:id', async (req, res) => {
+  const { id } = req.params;
+  const user = await checkToken(req);
+
+  if(user) {
+    let results = null;
+    try {
+      results = await ResultsSchema.findById(id, { questionsRight: 1, questionsMax: 1 });  
+    } catch (error) {
+      return res.sendStatus(500);
+    }
+
+    return res.send(results);
+  }
+
+  return res.send(403);
+})
+
 app.get('/users/userdata', async (req, res) => {
   const user = await checkToken(req);
 
