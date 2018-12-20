@@ -37,7 +37,8 @@ const ResultsSchema = mongoose.model('ResultsSchema', {
   test: { type: ObjectIdType, ref: 'TestsSchema' },
   answers: Array,
   questionsMax: Number,
-  questionsRight: Number
+  questionsRight: Number,
+  date: Date,
 }, 'results');
 
 
@@ -149,7 +150,8 @@ app.post('/results', async (req, res) => {
         test: testId,
         answers: answers,
         questionsMax: test.questions.length,
-        questionsRight: rightAnswers
+        questionsRight: rightAnswers,
+        date: new Date(),
       });
 
       await newResults.save();
