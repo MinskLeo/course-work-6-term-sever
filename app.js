@@ -17,19 +17,18 @@ const UserSchema = mongoose.model('UserSchema', {
   lastName: String,
   email: String,
   password: String,
-  avatar: String
+  avatar: String,
 }, 'users');
 
 const QuestionSchema = mongoose.model('QuestionSchema', {
   question: String,
-  type: String,
   answers: Array,
-  rightAnswer: String
+  rightAnswers: Array,
 }, 'questions');
 
 const TestsSchema = mongoose.model('TestsSchema', {
   name: String,
-  questions: [{ type: ObjectIdType, ref: 'QuestionSchema' }]
+  questions: [{ type: ObjectIdType, ref: 'QuestionSchema' }],
 }, 'tests');
 
 const ResultsSchema = mongoose.model('ResultsSchema', {
@@ -83,7 +82,7 @@ const checkToken = async (req) => {
   return false;
 }
 
-app.post('/auth/login', async (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { login, password } = req.body;
   const cryptedPassword = crypto.SHA256(password).toString();
   
@@ -101,7 +100,7 @@ app.post('/auth/login', async (req, res) => {
   return res.sendStatus(403);
 });
 
-app.get('/tests', async (req, res) => {
+app.get('/api/tests', async (req, res) => {
   const isTokenValid = await checkToken(req);
 
   if(isTokenValid) {
@@ -114,7 +113,7 @@ app.get('/tests', async (req, res) => {
 
 
 
-app.get('/tests/:id', async (req, res) => {
+app.get('/api/tests/:id', async (req, res) => {
   const { id } = req.params;
   const isTokenValid = await checkToken(req);
 
@@ -122,7 +121,7 @@ app.get('/tests/:id', async (req, res) => {
     const test = await TestsSchema.findById(id)
       .populate({
         path: 'questions',
-        select: '-rightAnswer'
+        select: '-rightAnswers'
       });
     return res.send(test);
   }
@@ -130,18 +129,30 @@ app.get('/tests/:id', async (req, res) => {
   return res.sendStatus(403);
 });
 
-app.post('/results', async (req, res) => {
+app.post('/api/results', async (req, res) => {
   const { testId, answers } = req.body;
   const user = await checkToken(req);
 
   if (user && testId && answers) {
     const test = await TestsSchema.findById(testId).populate('questions');
 
-    if (test && answers.length === test.questions.length) {
-      let rightAnswers = 0;
-      test.questions.forEach((question, index) => {
-        if (question.rightAnswer === answers[index]) {
-          rightAnswers += 1;
+    if (test.questions === answers.length) {
+      const questions = test.questions;
+      let trueQuestions = 0;
+
+      questions.forEach((question, index) => {
+        let isQuestionRight = true;
+        const rightQuestionAnswers = question.rightAnswers;
+
+        for (let i = 0; i < rightQuestionAnswers.length; i++) {
+          if (rightQuestionAnswers[i] !== answers[index][i].checked) {
+            isQuestionRight = false;
+            break;
+          }
+        }
+
+        if (isQuestionRight) {
+          trueQuestions += 1;
         }
       });
 
@@ -149,8 +160,8 @@ app.post('/results', async (req, res) => {
         author: user._id,
         test: testId,
         answers: answers,
-        questionsMax: test.questions.length,
-        questionsRight: rightAnswers,
+        questionsMax: questions.length,
+        questionsRight: trueQuestions,
         date: new Date(),
       });
 
@@ -162,7 +173,7 @@ app.post('/results', async (req, res) => {
   return res.sendStatus(400);
 });
 
-app.get('/results', async (req, res) => {
+app.get('/api/results', async (req, res) => {
   const user = await checkToken(req);
 
   if (user) {
@@ -173,7 +184,7 @@ app.get('/results', async (req, res) => {
   return res.sendStatus(403);
 });
 
-app.get('/results/:id', async (req, res) => {
+app.get('/api/results/:id', async (req, res) => {
   const { id } = req.params;
   const user = await checkToken(req);
 
@@ -191,11 +202,9 @@ app.get('/results/:id', async (req, res) => {
   return res.send(403);
 })
 
-app.get('/users/userdata', async (req, res) => {
+app.get('/api/users/userdata', async (req, res) => {
   const user = await checkToken(req);
-
   if (user) return res.send(user);
-
   return res.sendStatus(403);
 });
 
