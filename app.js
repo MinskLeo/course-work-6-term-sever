@@ -94,7 +94,7 @@ app.post('/api/auth/login', async (req, res) => {
   if(user) {
     const token = createToken(login, cryptedPassword);
     res.cookie('token', token);
-    return res.sendStatus(200);
+    return res.send({});
   }
 
   return res.sendStatus(403);
@@ -136,7 +136,7 @@ app.post('/api/results', async (req, res) => {
   if (user && testId && answers) {
     const test = await TestsSchema.findById(testId).populate('questions');
 
-    if (test.questions === answers.length) {
+    if (test.questions.length === answers.length) {
       const questions = test.questions;
       let trueQuestions = 0;
 
