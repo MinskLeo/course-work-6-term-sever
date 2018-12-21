@@ -41,7 +41,7 @@ const ResultsSchema = mongoose.model('ResultsSchema', {
 }, 'results');
 
 
-
+app.set("view engine", "ejs");
 app.use(express.static('assets'));
 app.use(bodyParser.json() );
 app.use(cookieParser() );
@@ -81,6 +81,10 @@ const checkToken = async (req) => {
 
   return false;
 }
+
+app.get('/', (req, res) => {
+  res.render('index');
+});
 
 app.post('/api/auth/login', async (req, res) => {
   const { login, password } = req.body;
