@@ -182,7 +182,7 @@ app.get('/api/results/:id', async (req, res) => {
   }
 
   return res.send(403);
-});
+})
 
 app.get('/api/users/userdata', async (req, res) => {
   const user = await authService.checkToken(req);
